@@ -1,0 +1,4 @@
+#!/usr/bin/tcsh
+
+echo $_
+echo "innerSource"

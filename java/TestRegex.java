@@ -12,14 +12,20 @@ public class TestRegex {
         }
         while (true) {
 
-            Pattern pattern = 
-            Pattern.compile(console.readLine("%nEnter your regex: "));
-
             // Pattern pattern = 
-	    // 	Pattern.compile("\\{@code(.*)\\}");
+            // Pattern.compile(console.readLine("%nEnter your regex: "));
+
+            Pattern pattern = 
+	    	//Pattern.compile("\\{@code[ ]?(.*)\\}", Pattern.DOTALL);
+		Pattern.compile("\\{@code[ ]?(((\\\\})?[^\\}]?)*)\\}", Pattern.DOTALL);
+	    // match : {@code blaazodk \}  adapok \} amzdkak } 
+	    // and get "blaazodk \}  adapok \} amzdkak" as group 1 
 
             Matcher matcher = 
-            pattern.matcher(console.readLine("Enter input string to search: "));
+		pattern.matcher(console.readLine("Enter input string to search: "));
+
+	    String replacement = matcher.replaceAll("$1");
+	    System.out.println("Replaced string: "+replacement);
 
             boolean found = false;
             while (matcher.find()) {
@@ -31,6 +37,7 @@ public class TestRegex {
                     matcher.end());
                 found = true;
             }
+
             if(!found){
                 console.format("No match found.%n");
             }
