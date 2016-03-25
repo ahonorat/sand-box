@@ -6,6 +6,10 @@ public class ArgumentAssignation {
 	this.value = value;
     }
 
+    public static void doubleDouble(Double db) {
+	db *= 2.0;
+    }
+
     public static ArgumentAssignation swapInv(ArgumentAssignation a) {
 	a = new ArgumentAssignation(1. / a.value);
 	return a;
@@ -13,8 +17,12 @@ public class ArgumentAssignation {
 
     public static void main(String[] arg) {
 	ArgumentAssignation a = new ArgumentAssignation(2.);
-	swapInv(a).print();
 	a.print();
+	swapInv(a).print();
+
+	Double d = new Double(1.0);
+	doubleDouble(d);
+	System.out.println(d);
     }
 
 

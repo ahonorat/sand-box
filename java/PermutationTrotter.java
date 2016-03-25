@@ -1,6 +1,6 @@
 /**
  * This class implements Johnson-Trotter algorithm
- * in order to generate all permutation ot a given size.
+ * in order to generate all permutation of a given size.
  */
 
 public class PermutationTrotter {
@@ -77,7 +77,7 @@ public class PermutationTrotter {
     /**
      * Move an element according to its direction.
      *
-     * @param index Index of the element (starting from 0).
+     * @param i Index of the element (starting from 0).
      */
     private void move(int i) {
 	Dir d = dirs[i];
@@ -92,7 +92,7 @@ public class PermutationTrotter {
      * Compute if an element of the permutation can be moved.
      *
      * @param i The index to check (starting from 0).
-     * @return True if movable, flase otherwise.
+     * @return True if movable, false otherwise.
      */
     private boolean isMovable(int i) {
 	Dir d = dirs[i];
