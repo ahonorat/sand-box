@@ -1,6 +1,6 @@
 CFLAGS:=-g -O0 -L.
 # in order to not have to set LD_LIBRARY_PATH
-LFLAGS:= #-Wl,-R -Wl,/home/honorat/Documents/dev/sand-box/gcc_debug
+LFLAGS:= #-Wl,-rpath=/home/honorat/Documents/dev/sand-box/gcc_debug
 # remember, the lib name must begin by ... lib
 
 
