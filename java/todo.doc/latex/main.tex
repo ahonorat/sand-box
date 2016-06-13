@@ -1,0 +1,155 @@
+%% -*- eval: (flyspell-mode 1); eval: (ispell-change-dictionary "english"); -*-
+
+\documentclass[10pt,onecolumn]{report}
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+
+\usepackage{xspace}
+\usepackage{fancyvrb}
+
+\usepackage{graphicx}
+
+\usepackage{geometry}
+\geometry{hmargin=2cm,vmargin=2cm}
+
+\usepackage{framed}
+
+\usepackage{enumitem}
+\setlistdepth{7}
+
+\usepackage{hyperref}
+\hypersetup{colorlinks=true}
+
+
+\begin{document}
+
+
+\input{front-page.tex}
+
+\tableofcontents
+
+\chapter{Usage}
+
+\section{Simplified instructions}
+
+Start by copying this module into your current \textsf{Maven} project, and reference it
+from your parent \verb!pom!. Then in the module from where you want to export \verb!todo! 
+tags, copy the following block into the \verb!pom!. Don't forget to change the paths.
+
+\begin{framed}
+\begin{verbatim}
+<reporting>
+<plugins>
+<plugin>
+<groupId>org.apache.maven.plugins</groupId>
+<artifactId>maven-javadoc-plugin</artifactId>
+<version>2.10.3</version>
+<reportSets>
+<reportSet>
+<id>tex.todo.doc</id>
+<reports>
+<report>javadoc</report>
+</reports>
+<configuration>
+<show>private</show>
+
+<!-- Relative to ./target -->
+<destDir>/path/to/todo.doc/latex/appendix</destDir>
+
+<tagletpath>${doc.jar.location}</tagletpath>
+<taglet>todo.doctaglet.latexexporter.ToDoTaglet</taglet>
+<useStandardDocletOptions>false</useStandardDocletOptions>
+
+<docletPath>/path/to/latexexporter-0.0.1-SNAPSHOT.jar</docletPath>
+
+<doclet>todo.doctaglet.latexexporter.TodoLatexDoclet</doclet>
+</configuration>
+</reportSet>
+</reportSets>
+</plugin>
+</plugins>
+</reporting>
+\end{verbatim}
+\end{framed}
+
+Then just put some \verb!todo! tags in your documented module, and call
+\verb!mvn site! in it ! And recompile this file, of course.
+
+\section{More complicated stuff}
+
+\paragraph{}
+First thing: \verb!todo! tags are collected for classes, methods and 
+constructors only.
+
+\paragraph{}
+Second thing: the generator transform a little bit the text present in the 
+\verb!todo! comment. It will escape underscores and it will transform
+\verb!{@code ...}! parts into \verb!\texttt{...}! formatted text. Also some
+others replacements are made:
+\begin{itemize}
+\item \verb!&amp;! by \&;
+\item \verb!&lt! by $<$;
+\item \verb!&gt! by $>$.
+\end{itemize}
+
+\paragraph{}
+Third thing, the full prefixed name of a method can be quite annoying so the
+prefix part will be removed accordingly to the variable: \verb!QUALIFIER_PREFIX!
+("todo.doctaglet." by default) in the file \verb!TodoLatexDoclet.java!, you have
+to change it to escape your own package prefixes.
+
+\paragraph{}
+A classic documentation will also be generated when running the \verb!mvn site!
+command. If, when writing a \verb!todo! tag, you also put just after it the line :
+\verb!<span class="todo">--&gt;&gt;</span>! and you copy the file 
+\verb!javadoc/stylesheet.css! at the same location in your documented module to
+export, you will have a nice red arrow to easily identify such tags in your
+documentation. 
+
+\paragraph{}
+Finally, a little example:
+\begin{framed}
+\begin{verbatim}
+/**
+ * @todo <span class="todo">--&gt;&gt;</span>
+ * This is my todo. {@code Such wow.}
+ *
+ */
+public void doNothing(int param) {}
+\end{verbatim}
+\end{framed}
+The \LaTeX generated code will be:
+\begin{framed}
+\begin{verbatim}
+\subsection*{my.package.doNothing(int)}
+
+ This is my todo. \texttt{Such wow.}
+\end{verbatim}
+\end{framed}
+
+\subsection*{my.package.doNothing(int)}
+
+ This is my todo. \texttt{Such wow.}
+
+
+
+
+%%
+
+\appendix
+\chapter{Generated todos}
+
+\IfFileExists{./appendix/todo.tex}
+{
+  \input{appendix/todo.tex}
+}{
+  \section{To do:}
+  This section will be filled once you'll run the command \texttt{mvn site} in
+  your project main folder. It will be generated directly from the commented
+  sources containing a @todo tag.
+}
+
+%%
+
+
+\end{document}
