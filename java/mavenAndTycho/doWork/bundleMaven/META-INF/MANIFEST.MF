@@ -1,0 +1,12 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1471622907527
+Build-Jdk: 1.8.0_101
+Built-By: ahonorat
+Bundle-ManifestVersion: 2
+Bundle-Name: Pure Maven Project
+Bundle-SymbolicName: ah.bm
+Bundle-Version: 0.0.1.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+Export-Package: ah.bm;version="0.0.1"
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.5))"
+Tool: Bnd-3.2.0.201605172007

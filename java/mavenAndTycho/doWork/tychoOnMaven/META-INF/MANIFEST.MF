@@ -1,0 +1,10 @@
+Manifest-Version: 1.0
+Bundle-SymbolicName: ah.tm
+Built-By: ahonorat
+Bundle-ManifestVersion: 2
+Import-Package: ah.bm
+Export-Package: ah.tm
+Bundle-Name: Tycho on Maven example
+Bundle-Version: 0.0.1.qualifier
+Bundle-ClassPath: .
+Build-Jdk: 1.8.0_101
