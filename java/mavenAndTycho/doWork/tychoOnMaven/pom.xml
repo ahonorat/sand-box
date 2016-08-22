@@ -28,6 +28,14 @@
   </repositories>
 
 
+  <dependencies>
+    <dependency>
+      <groupId>ah</groupId>
+      <artifactId>bm</artifactId>
+      <version>0.0.1-SNAPSHOT</version>
+    </dependency>
+  </dependencies>
+
   <build>
     <plugins>
       <plugin>
@@ -42,6 +50,7 @@
 	<artifactId>target-platform-configuration</artifactId>
 	<version>${tycho.version}</version>
 	<configuration>
+          <pomDependencies>consider</pomDependencies>
 	  <environments>
 	    <environment>
 	      <os>linux</os>

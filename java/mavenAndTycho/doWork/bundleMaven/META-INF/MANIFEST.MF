@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1471622907527
+Bnd-LastModified: 1471855751797
 Build-Jdk: 1.8.0_101
 Built-By: ahonorat
 Bundle-ManifestVersion: 2
