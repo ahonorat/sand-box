@@ -1,0 +1,29 @@
+Manifest-Version: 1.0
+Bnd-LastModified: 1472052318156
+Build-Jdk: 1.8.0_101
+Built-By: ahonorat
+Bundle-ClassPath: .,plexus-utils-2.0.7.jar
+Bundle-ManifestVersion: 2
+Bundle-Name: Mixed Maven Project
+Bundle-SymbolicName: ah.mm
+Bundle-Version: 0.0.1.SNAPSHOT
+Created-By: Apache Maven Bundle Plugin
+Embed-Dependency: plexus-utils
+Embedded-Artifacts: plexus-utils-2.0.7.jar;g="org.codehaus.plexus";a="pl
+ exus-utils";v="2.0.7"
+Export-Package: org.codehaus.plexus.util;version="2.0.7";uses:="org.code
+ haus.plexus.util.io,org.codehaus.plexus.util.xml",org.codehaus.plexus.u
+ til.cli;version="2.0.7";uses:="org.codehaus.plexus.util.cli.shell",org.
+ codehaus.plexus.util.cli.shell;version="2.0.7",org.codehaus.plexus.util
+ .dag;version="2.0.7",org.codehaus.plexus.util.introspection;version="2.
+ 0.7",org.codehaus.plexus.util.io;version="2.0.7",org.codehaus.plexus.ut
+ il.reflection;version="2.0.7",org.codehaus.plexus.util.xml;version="2.0
+ .7";uses:="org.codehaus.plexus.util.xml.pull",org.codehaus.plexus.util.
+ xml.pull;version="2.0.7"
+Import-Package: org.codehaus.plexus.util;version="[2.0,3)",org.codehaus.
+ plexus.util.cli.shell;version="[2.0,3)",org.codehaus.plexus.util.io;ver
+ sion="[2.0,3)",org.codehaus.plexus.util.reflection;version="[2.0,3)",or
+ g.codehaus.plexus.util.xml;version="[2.0,3)",org.codehaus.plexus.util.x
+ ml.pull;version="[2.0,3)"
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.5))"
+Tool: Bnd-3.2.0.201605172007

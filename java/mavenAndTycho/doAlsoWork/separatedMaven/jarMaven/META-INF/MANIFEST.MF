@@ -1,12 +1,13 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1472049338349
+Bnd-LastModified: 1472052131132
 Build-Jdk: 1.8.0_101
 Built-By: ahonorat
 Bundle-ManifestVersion: 2
-Bundle-Name: Pure Maven Project
-Bundle-SymbolicName: ah.bm
+Bundle-Name: Mixed Maven Project
+Bundle-SymbolicName: ah.sm
 Bundle-Version: 0.0.1.SNAPSHOT
 Created-By: Apache Maven Bundle Plugin
-Export-Package: ah.bm;version="0.0.1"
+Export-Package: ah.sm;version="0.0.1"
+Import-Package: org.codehaus.plexus.util
 Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.5))"
 Tool: Bnd-3.2.0.201605172007

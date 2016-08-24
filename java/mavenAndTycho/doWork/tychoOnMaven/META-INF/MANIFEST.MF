@@ -1,9 +1,9 @@
 Manifest-Version: 1.0
-Bundle-SymbolicName: ah.tm
+Bundle-SymbolicName: ah.tm1
 Built-By: ahonorat
 Bundle-ManifestVersion: 2
 Import-Package: ah.bm
-Export-Package: ah.tm
+Export-Package: ah.tm1
 Bundle-Name: Tycho on Maven example
 Bundle-Version: 0.0.1.qualifier
 Bundle-ClassPath: .

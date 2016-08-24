@@ -1,6 +1,6 @@
-package ah.tm;
+package ah.tm3;
 
-import ah.bm.DoNothing;
+import ah.sm.DoNothing;
 
 public class DoSomething {
     
