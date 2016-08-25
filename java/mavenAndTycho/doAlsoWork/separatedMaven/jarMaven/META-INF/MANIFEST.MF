@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1472052131132
+Bnd-LastModified: 1472130532068
 Build-Jdk: 1.8.0_101
-Built-By: ahonorat
+Built-By: Alexandre Honorat
 Bundle-ManifestVersion: 2
 Bundle-Name: Mixed Maven Project
 Bundle-SymbolicName: ah.sm
