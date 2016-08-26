@@ -1,7 +1,7 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1472130055472
+Bnd-LastModified: 1472140409135
 Build-Jdk: 1.8.0_101
-Built-By: Alexandre Honorat
+Built-By: ahonorat
 Bundle-ClassPath: .,plexus-utils-2.0.7.jar
 Bundle-ManifestVersion: 2
 Bundle-Name: Mixed Maven Project
