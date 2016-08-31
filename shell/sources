@@ -1,5 +1,0 @@
-#!/usr/bin/tcsh
-
-echo $_
-echo $#command
-source innerSource

@@ -1,0 +1,8 @@
+#!/usr/bin/tcsh
+
+set lastCmd0 = ($_)
+echo "O: ${lastCmd0}"
+echo "O: $0"
+# echo $#command
+source inner_sourced
+echo "O: end"

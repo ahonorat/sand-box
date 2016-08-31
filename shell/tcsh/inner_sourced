@@ -1,0 +1,6 @@
+#!/usr/bin/tcsh
+
+set lastCmd0 = ($_)
+echo "I: ${lastCmd0}"
+echo "I: $0"
+echo "I: end"
