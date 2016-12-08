@@ -1,7 +1,7 @@
-CFLAGS:=-g -O0 -L.
+CFLAGS:=-g -O0
 # in order to not have to set LD_LIBRARY_PATH
-LFLAGS0:=-Wl,-rpath,.
-LFLAGS1:=-Wl,-rpath,./blzblz
+LFLAGS0:=-Wl,-rpath,@loader_path -L.
+LFLAGS1:=-Wl,-rpath,./blzblz -L.
 
 # remember, the lib name must begin by ... lib
 
