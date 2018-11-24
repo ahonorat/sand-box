@@ -12,7 +12,7 @@ void allocate(int size) {
   //unsigned char* buffer; //does not work
   //buffer = unsigned char[size+VAL_ADD];
 
-  int buffer[sizeA];
+  int buffer[(sizeA*4)/2];
 
   int i;
   for (i = 0; i < sizeA; ++i) {
