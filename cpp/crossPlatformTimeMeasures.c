@@ -23,6 +23,7 @@ static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
 
 #elif defined(__APPLE__) && defined(__MACH__)
 
+#include <unistd.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <mach/mach_time.h>
@@ -32,14 +33,13 @@ static inline void dumpTime(int id, uint64_t * dumpBuffer) {
 	dumpBuffer[id] = mach_absolute_time();
 }
 
+
 static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
-	double res;
-	static double timeConvert = 0.0;
 	mach_timebase_info_data_t timeBase;
 	mach_timebase_info(&timeBase);
-	timeConvert = (double) timeBase.numer /	timeBase.denom;
 	fprintf(stderr, "Mach time: %i/%i\n", timeBase.numer, timeBase.denom);
-	res = ((*end) - (*start))*timeConvert;
+	double res = (double) timeBase.numer /	timeBase.denom;
+	res *= ((*end) - (*start));
 	return res;
 }
 
