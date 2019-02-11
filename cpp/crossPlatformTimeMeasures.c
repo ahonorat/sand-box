@@ -1,3 +1,5 @@
+#include <stdio.h>
+
 #ifdef _WIN32
 
 #include <windows.h>
@@ -25,7 +27,6 @@ static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
 
 #include <unistd.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <mach/mach_time.h>
 #include <stdlib.h>
 
@@ -48,7 +49,6 @@ static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
 
 #include <unistd.h>
 #include <stdint.h>
-#include <stdio.h>
 #include <time.h>
 #include <stdlib.h>
 
@@ -79,7 +79,11 @@ static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
 int main(int argc, char **argv) {
   uint64_t tab[2] = {0, 0}; 
   dumpTime(0, tab);
-  sleep(1);
+#ifdef _WIN32
+  Sleep(1000); // ms on windows
+#else
+  sleep(1); // s on Linux
+#endif 
   dumpTime(1, tab);
   fprintf(stderr, "Elapsed ns: %lf\n", getElapsedNanoSec(tab, tab+1));
   
