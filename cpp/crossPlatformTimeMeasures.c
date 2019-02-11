@@ -45,7 +45,7 @@ static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
 }
 
 
-#elif defined(__GNUC__)
+#elif defined(__gnu_linux__)  //defined(__linux__) && !defined(__ANDROID__) instead of __GNUC__ but note that clang also defines __GNUC__ 
 
 #include <unistd.h>
 #include <stdint.h>
