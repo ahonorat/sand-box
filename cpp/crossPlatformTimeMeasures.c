@@ -45,7 +45,8 @@ static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
 }
 
 
-#elif defined(__gnu_linux__)  //defined(__linux__) && !defined(__ANDROID__) instead of __GNUC__ but note that clang also defines __GNUC__ 
+#elif defined(__gnu_linux__)  && _POSIX_C_SOURCE >= 199309L //defined(__linux__) && !defined(__ANDROID__) instead of __GNUC__ but note that clang also defines __GNUC__ 
+// compile with -std=gnu99 instead of -std=c99
 
 #include <unistd.h>
 #include <stdint.h>
@@ -64,12 +65,17 @@ static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
 
 #else // Undefined or Unsupported platform, thus no assumption is made on available hardware
 
+#include <unistd.h>
+#include <stdint.h>
+#include <time.h>
+#include <stdlib.h>
+
 static inline void dumpTime(int id, uint64_t * dumpBuffer) {
-    dumpBuffer[id] = 0;
+  dumpBuffer[id] = clock();
 }
 
 static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
-    return 0;
+    return ((*end) - (*start));
 }
 #endif
 
@@ -86,6 +92,6 @@ int main(int argc, char **argv) {
 #endif 
   dumpTime(1, tab);
   fprintf(stderr, "Elapsed ns: %lf\n", getElapsedNanoSec(tab, tab+1));
-  
+
   return EXIT_SUCCESS;
 }
