@@ -63,7 +63,7 @@ static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
     return ((*end) - (*start));
 }
 
-#else // Undefined or Unsupported platform, thus no assumption is made on available hardware
+#else // otherwise use clock() as in the standard, which returns ms (CPU user timer)
 
 #include <unistd.h>
 #include <stdint.h>
@@ -75,7 +75,7 @@ static inline void dumpTime(int id, uint64_t * dumpBuffer) {
 }
 
 static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
-    return ((*end) - (*start));
+    return ((*end) - (*start))*1000;
 }
 #endif
 
@@ -89,7 +89,12 @@ int main(int argc, char **argv) {
   Sleep(1000); // ms on windows
 #else
   sleep(1); // s on Linux
-#endif 
+#endif
+
+  for (int i = 0; i < 1e9; i++) {
+    long a = 2*i;
+  }
+  
   dumpTime(1, tab);
   fprintf(stderr, "Elapsed ns: %lf\n", getElapsedNanoSec(tab, tab+1));
 
