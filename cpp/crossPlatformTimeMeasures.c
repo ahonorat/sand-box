@@ -46,7 +46,7 @@ static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
 
 
 #elif defined(__gnu_linux__)  && _POSIX_C_SOURCE >= 199309L //defined(__linux__) && !defined(__ANDROID__) instead of __GNUC__ but note that clang also defines __GNUC__ 
-// compile with -std=gnu99 instead of -std=c99
+// compile with -std=gnu99 instead of -std=c99 or with -D_GNU_SOURCE
 
 #include <unistd.h>
 #include <stdint.h>
@@ -60,7 +60,7 @@ static inline void dumpTime(int id, uint64_t * dumpBuffer) {
 }
 
 static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
-    return ((*end) - (*start));
+  return ((*end) - (*start));
 }
 
 #else // otherwise use clock() as in the standard, which returns ms (CPU user timer)
@@ -75,7 +75,7 @@ static inline void dumpTime(int id, uint64_t * dumpBuffer) {
 }
 
 static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
-    return ((*end) - (*start))*1000;
+  return ((*end) - (*start))*1000;
 }
 #endif
 
@@ -85,6 +85,7 @@ static inline double getElapsedNanoSec(uint64_t *start, uint64_t *end) {
 int main(int argc, char **argv) {
   uint64_t tab[2] = {0, 0}; 
   dumpTime(0, tab);
+
 #ifdef _WIN32
   Sleep(1000); // ms on windows
 #else
@@ -94,7 +95,7 @@ int main(int argc, char **argv) {
   for (int i = 0; i < 1e9; i++) {
     long a = 2*i;
   }
-  
+
   dumpTime(1, tab);
   fprintf(stderr, "Elapsed ns: %lf\n", getElapsedNanoSec(tab, tab+1));
 
