@@ -67,7 +67,6 @@ int main(int argc, char **argv) {
 	for (int i = 1; i <= 7; i += 2) {
 #pragma omp task
 	  {
-	    fprintf(stderr, "OZG: thread %d\n", omp_get_thread_num());
 
 #pragma omp task
 	    {
@@ -79,13 +78,12 @@ int main(int argc, char **argv) {
 		  }	      
 		}
 	      }
-	      fprintf(stderr, "OZG: subtask finished: thread %d\n", omp_get_thread_num());
+	      fprintf(stderr, "OZG: subtask finished: thread %d (i: %d)\n", omp_get_thread_num(), i);
 	    }
+	    fprintf(stderr, "OZG: task finished: thread %d (i: %d)\n", omp_get_thread_num(), i);
 #pragma omp taskwait
-	    // this last taskwait is needed because otherwise the subtask are not waited
-	    // by node 2 (only the OZG: thread will be waited for)
-	    // the other possibility is to create a task group ... but it seems less convenient
-	    // however this is not a problem 
+	    // this last taskwait is needed because otherwise the subtask of node 1 are not waited by node 2
+	    // the other possibility is to create a task group ... but it seems slower, but maybe safer?
 	  }
 	}
 #pragma omp taskwait
