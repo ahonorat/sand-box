@@ -8,6 +8,9 @@
 int main(int argc, char **argv) {
 
 
+  // slower execution than ompTaskFor.c
+  // subtask taskwait is replaced by taskgroup
+
   if (argc > 1 ) {
     omp_set_num_threads(atoi(argv[1]));
   }
@@ -29,7 +32,8 @@ int main(int argc, char **argv) {
 	  fprintf(stderr, "Begin of path 1\n");
 	}
 #pragma omp taskwait
-	
+#pragma omp taskgroup
+	{
 	// node 1
 	for (int i = 2; i <= 8; i += 2) {
 #pragma omp task
@@ -44,6 +48,7 @@ int main(int argc, char **argv) {
 	    }
 	    fprintf(stderr, "IUH: task finished: thread %d (i: %d)\n", omp_get_thread_num(), i);
 	  }
+	}
 	}
 #pragma omp taskwait
 	// node 2
@@ -63,6 +68,8 @@ int main(int argc, char **argv) {
 	  fprintf(stderr, "Begin of path 2\n");
 	}
 #pragma omp taskwait
+#pragma omp taskgroup
+	{
 	// node 1
 	for (int i = 1; i <= 7; i += 2) {
 #pragma omp task
@@ -81,12 +88,8 @@ int main(int argc, char **argv) {
 	      }
 	      fprintf(stderr, "OZG: subtask finished: thread %d\n", omp_get_thread_num());
 	    }
-#pragma omp taskwait
-	    // this last taskwait is needed because otherwise the subtask are not waited
-	    // by node 2 (only the OZG: thread will be waited for)
-	    // the other possibility is to create a task group ... but it seems less convenient
-	    // however this is not a problem 
 	  }
+	}
 	}
 #pragma omp taskwait
 	// node 2
