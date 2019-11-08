@@ -2,9 +2,7 @@ package org.ietr.vaader.jgraphDAGtest;
 
 import java.util.function.Supplier;
 
-import org.jgrapht.graph.DefaultEdge;
 import org.jgrapht.graph.DirectedAcyclicGraph;
-import org.jgrapht.util.SupplierUtil;
 
 public class Launcher {
 
@@ -49,8 +47,7 @@ public class Launcher {
 		// edge style does not change anything
 
 		//		final DirectedAcyclicGraph<DAGvertex, DefaultEdge> dag = new DirectedAcyclicGraph<>(null, SupplierUtil.createDefaultEdgeSupplier(), false);
-		//		final DirectedAcyclicGraph<DAGvertex, DAGedge> dag = new DirectedAcyclicGraph<>(null, eSupplier, false);
-		final DirectedAcyclicGraph<DAGvertex, DAGedge> dag = new DirectedAcyclicGraph<>(DAGedge.class);
+		final DirectedAcyclicGraph<DAGvertex, DAGedge> dag = new DirectedAcyclicGraph<>(null, eSupplier, false);
 
 		DAGvertex readYUV = new DAGvertex("Read_YUV_0");
 		DAGvertex split = new DAGvertex("Split_0");
@@ -60,8 +57,7 @@ public class Launcher {
 		dag.addVertex(split);
 		dag.addVertex(sobel);
 
-		dag.addEdge(split, sobel, new DAGedge());
-		//		dag.addEdge(split, sobel);
+		dag.addEdge(split, sobel);
 
 
 		// crash if clone
@@ -71,19 +67,16 @@ public class Launcher {
 		}
 		System.err.println("Edges before clone.");
 
-
+		// faulty clone
+		@SuppressWarnings("unchecked")
+		final DirectedAcyclicGraph<DAGvertex, DAGedge> clone = (DirectedAcyclicGraph<DAGvertex, DAGedge>) dag.clone();				
 
 		DAGvertex ssSplitSobel = new DAGvertex("ssSplitSobel");
 		DAGvertex seSplitSobel = new DAGvertex("seSplitSobel");
 		dag.addVertex(ssSplitSobel);
 		dag.addVertex(seSplitSobel);
 
-		// faulty clone
-		@SuppressWarnings("unchecked")
-		final DirectedAcyclicGraph<DAGvertex, DAGedge> clone = (DirectedAcyclicGraph<DAGvertex, DAGedge>) dag.clone();				
-
-		dag.addEdge(ssSplitSobel, seSplitSobel, new DAGedge());
-		//		dag.addEdge(ssSplitSobel, seSplitSobel);
+		dag.addEdge(ssSplitSobel, seSplitSobel);
 
 		// clone at this place is fine
 		//		@SuppressWarnings("unchecked")
@@ -100,8 +93,7 @@ public class Launcher {
 		System.err.println("Edges of clone.");
 
 		// faulty new edge if clone
-		dag.addEdge(split, ssSplitSobel, new DAGedge());
-		//		dag.addEdge(split, ssSplitSobel);
+		dag.addEdge(split, ssSplitSobel);
 
 
 		System.err.println("Everything went fine");
