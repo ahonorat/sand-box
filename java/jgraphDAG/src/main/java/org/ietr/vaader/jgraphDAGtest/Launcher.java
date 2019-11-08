@@ -1,8 +1,11 @@
 package org.ietr.vaader.jgraphDAGtest;
 
+import java.util.List;
 import java.util.function.Supplier;
 
+import org.jgrapht.alg.cycle.JohnsonSimpleCycles;
 import org.jgrapht.graph.DirectedAcyclicGraph;
+import org.jgrapht.graph.SimpleDirectedGraph;
 
 public class Launcher {
 
@@ -93,8 +96,28 @@ public class Launcher {
 		System.err.println("Edges of clone.");
 
 		// faulty new edge if clone
-		dag.addEdge(split, ssSplitSobel);
-
+		try {
+			dag.addEdge(split, ssSplitSobel);          
+		} catch (IllegalArgumentException e) {
+			System.err.println("ERRRROOOOOOR");
+			SimpleDirectedGraph<DAGvertex, DAGedge> copy = new SimpleDirectedGraph<>(DAGedge.class);
+			dag.vertexSet().forEach(copy::addVertex);
+			dag.edgeSet().forEach(edge -> {
+				DAGvertex src = dag.getEdgeSource(edge);
+				DAGvertex tgt = dag.getEdgeTarget(edge);
+				copy.addEdge(src, tgt, edge);
+			});
+			copy.addEdge(split, ssSplitSobel, new DAGedge());
+			final JohnsonSimpleCycles<DAGvertex, DAGedge> cycleFinder = new JohnsonSimpleCycles<>(copy);
+			final List<List<DAGvertex>> cycles = cycleFinder.findSimpleCycles();
+			System.err.println("Cycle detector found: " + cycles.size() + " cycles.");
+			for (List<DAGvertex> cycle : cycles) {
+				final StringBuilder sb = new StringBuilder();
+				cycle.stream().forEach(a -> sb.append(" -> " + a));
+				System.err.println(sb.toString());
+			}
+			throw e;
+		}
 
 		System.err.println("Everything went fine");
 
