@@ -9,7 +9,6 @@
 
 
 
-
 // to test webcam frequency first:
 // v4l2-ctl --stream-mmap=10 --stream-count=200 --stream-to=/dev/null
 // to list possible resolutions:
@@ -21,10 +20,14 @@
 // v4l2-ctl --list-devices
 
 /* sources (simplified version of)
-https://linuxtv.org/downloads/v4l-dvb-apis/userspace-api/v4l/capture.c.html (no licence)
-https://github.com/severin-lemaignan/webcam-v4l2 (partly LGPL)
- */
+   https://linuxtv.org/downloads/v4l-dvb-apis/userspace-api/v4l/capture.c.html (no licence)
+   https://github.com/severin-lemaignan/webcam-v4l2 (partly LGPL)
+   https://github.com/preesm/preesm-apps (for SDL display)
+*/
 
+
+// To Compile:
+// gcc webcamTest.c -I/usr/include/SDL2 -L/usr/lib/x86_64-linux-gnu/ -lSDL2 -lSDL2_ttf -lpthread
 
 
 
@@ -48,6 +51,7 @@ https://github.com/severin-lemaignan/webcam-v4l2 (partly LGPL)
 
 #define CLEAR(x) memset(&(x), 0, sizeof(x))
 
+
 struct buffer {
   void   *start;
   size_t  length;
@@ -61,6 +65,260 @@ static int              force_format;
 static int              frame_count = 100;
 
 static int xres = 640, yres = 480, stride = 1280; // 640 x 480
+
+
+/*
+ * BEGIN OF SDL DISPLAY
+ **/
+
+
+#include <SDL.h>
+#include <SDL_ttf.h>
+#include <pthread.h>
+
+#define PATH_TTF_FULL "/usr/local/share/fonts/DejaVuSans.ttf"
+#define FPS_MEAN 10
+
+
+// extern int preesmStopThreads;
+
+
+static struct timeval startTimes[FPS_MEAN];
+
+// Starting to record time for a given stamp
+void startTiming(int stamp){
+  gettimeofday(&startTimes[stamp], NULL);
+}
+
+// Stoping to record time for a given stamp. Returns the time in us
+double stopTiming(int stamp){
+  struct timeval t2;
+
+  gettimeofday(&t2, NULL);
+
+  // compute and print the elapsed time in millisec
+  double elapsedusd = (t2.tv_sec - startTimes[stamp].tv_sec) * 1000000.0;      // sec to us
+  elapsedusd += (t2.tv_usec - startTimes[stamp].tv_usec);   // us
+  return elapsedusd;
+}
+
+
+
+/**
+ * Structure representing one display
+ */
+typedef struct RGBDisplay
+{
+  SDL_Texture* textures; // One overlay per frame
+  SDL_Window *screen; // SDL window where to display
+  SDL_Surface* surface;
+  SDL_Renderer *renderer;
+  TTF_Font *text_font;
+  int initialized; // Initialization done ?
+  int stampId;
+} RGBDisplay;
+
+
+// Initialize
+static RGBDisplay display ;
+
+int exitCallBack(void* userdata, SDL_Event* event){
+  if (event->type == SDL_QUIT){
+    printf("Exit request from GUI.\n");
+    // preesmStopThreads = 1;
+    return 0;
+  }
+
+  return 1;
+}
+
+void displayRGBInit(int height, int width){
+	
+  if (display.initialized == 0)
+    {
+      // Generating window name
+      char* name = "Display";
+      display.initialized = 1;
+
+      SDL_SetEventFilter(exitCallBack, NULL);
+
+
+      int sdlInitRes = 1, cpt = 10;
+      while (sdlInitRes && cpt > 0) {
+	sdlInitRes = SDL_Init(SDL_INIT_VIDEO);
+	cpt--;
+	if (sdlInitRes && cpt > 10) {
+	  printf(" fail SDL init ... retrying\n");
+	}
+      }
+      if (sdlInitRes){
+	fflush(stdout);
+	fprintf(stderr, "%d - %d -- Could not initialize SDL - %s\n", cpt, sdlInitRes, SDL_GetError());
+	exit(1);
+      }
+
+      printf("SDL_Init_end\n");
+
+      /* Initialize SDL TTF for text display */
+      if (TTF_Init())
+	{
+	  printf("TTF initialization failed: %s\n", TTF_GetError());
+	}
+
+      printf("TTF_Init\n");
+
+      /* Initialize Font for text display */
+      display.text_font = TTF_OpenFont(PATH_TTF_FULL, 20);
+      if (!display.text_font)
+	{
+	  printf("TTF_OpenFont: %s\n", TTF_GetError());
+	}
+
+      display.screen = SDL_CreateWindow(name, SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
+					width, height, SDL_WINDOW_SHOWN);
+      if (!display.screen)
+	{
+	  fprintf(stderr, "SDL: could not set video mode - exiting\n");
+	  exit(1);
+	}
+
+      display.renderer = SDL_CreateRenderer(display.screen, -1, SDL_RENDERER_ACCELERATED);
+      if (!display.renderer)
+	{
+	  fprintf(stderr, "SDL: could not create renderer - exiting\n");
+	  exit(1);
+	}
+
+
+      if (display.textures == NULL)
+	{
+
+	  display.textures = SDL_CreateTexture(display.renderer,
+					       SDL_PIXELFORMAT_RGB888,
+					       SDL_TEXTUREACCESS_STREAMING,
+					       width, height);
+
+	  if (!display.textures)
+	    {
+	      fprintf(stderr, "SDL: could not create texture - exiting\n");
+	      exit(1);
+	    }
+
+	}
+
+      if (display.surface == NULL){
+	display.surface = SDL_CreateRGBSurface(0, width, height, 32,0,0,0,0);
+	if (!display.surface)
+	  {
+	    fprintf(stderr, "SDL: could not create surface - exiting\n");
+	    exit(1);
+	  }
+      }
+
+
+      display.stampId = 0;
+      for (int i = 1; i<FPS_MEAN; i++){
+	startTiming(i);
+      }
+
+    }
+
+}
+
+
+void refreshDisplayRGB()
+{
+  SDL_Texture* texture = display.textures;
+  SDL_Event event;
+  SDL_Rect screen_rect;
+
+  SDL_QueryTexture(texture, NULL, NULL, &(screen_rect.w), &(screen_rect.h));
+
+  SDL_UpdateTexture(texture, NULL, display.surface->pixels, screen_rect.w*4);
+
+  screen_rect.x = 0;
+  screen_rect.y = 0;
+
+  SDL_RenderCopy(display.renderer, texture, NULL, &screen_rect);
+
+  /* Draw FPS text */
+  char fps_text[20];
+  SDL_Color colorWhite = { 255, 255, 255, 255 };
+
+  double time = stopTiming(display.stampId);
+  sprintf(fps_text, "FPS: %.1lf", FPS_MEAN / (time / 1000000.));
+  startTiming(display.stampId);
+  display.stampId = (display.stampId + 1) % FPS_MEAN;
+
+  SDL_Surface* fpsText = TTF_RenderText_Blended(display.text_font, fps_text, colorWhite);
+  SDL_Texture* fpsTexture = SDL_CreateTextureFromSurface(display.renderer, fpsText);
+
+  int fpsWidth, fpsHeight;
+  SDL_QueryTexture(fpsTexture, NULL, NULL, &fpsWidth, &fpsHeight);
+  SDL_Rect fpsTextRect;
+
+  fpsTextRect.x = 0;
+  fpsTextRect.y = 0;
+  fpsTextRect.w = fpsWidth;
+  fpsTextRect.h = fpsHeight;
+  SDL_RenderCopy(display.renderer, fpsTexture, NULL, &fpsTextRect);
+
+  /* Free resources */
+  SDL_FreeSurface(fpsText);
+  SDL_DestroyTexture(fpsTexture);
+
+  SDL_RenderPresent(display.renderer);
+
+  // Grab all the events off the queue.
+  while (SDL_PollEvent(&event))
+    {
+      switch (event.type)
+	{
+	default:
+	  break;
+	}
+    }
+}
+
+
+void displayRGB(unsigned char *rgb){
+
+  int idxPxl, idxPxlTimes3 = 0, idxPxlTimes4 = 0;
+  int w, h;
+  SDL_Texture* texture = display.textures;
+  SDL_Surface *surface = display.surface;
+
+  // Prepare RGB texture
+  // Retrieve texture attribute
+  SDL_QueryTexture(texture, NULL, NULL, &w, &h);
+  int size = w*h;
+     
+  for (idxPxl = 0; idxPxl < size; idxPxl++) {
+    *(((char*)(surface->pixels)) + idxPxlTimes4 + 0) = *(rgb + idxPxlTimes3 + 2);
+    *(((char*)(surface->pixels)) + idxPxlTimes4 + 1) = *(rgb + idxPxlTimes3 + 1);
+    *(((char*)(surface->pixels)) + idxPxlTimes4 + 2) = *(rgb + idxPxlTimes3 + 0);
+
+    idxPxlTimes3 += 3;
+    idxPxlTimes4 += 4;
+  }
+
+  refreshDisplayRGB();
+}
+
+
+void finalizeRGB()
+{
+  SDL_FreeSurface(display.surface);
+  SDL_DestroyTexture(display.textures);
+  SDL_DestroyRenderer(display.renderer);
+  SDL_DestroyWindow(display.screen);
+}
+
+/*
+ * END OF SDL DISPLAY
+ **/
+
+
 
 static void errno_exit(const char *s)
 {
@@ -111,6 +369,8 @@ static void v4lconvert_yuyv_to_rgb24(const unsigned char *src,
   }
 }
 
+
+
 static void process_image(const void *p, int size)
 {
 
@@ -123,18 +383,20 @@ static void process_image(const void *p, int size)
   			   stride);
 
 
-  FILE* out_file = fopen("image.ppm", "wb");
-  if (! out_file){
-    fprintf(stderr, "Fail to open image file.\n");
-  } else {
+  displayRGB(rgbData);
+  
+  /* FILE* out_file = fopen("image.ppm", "wb"); */
+  /* if (! out_file){ */
+  /*   fprintf(stderr, "Fail to open image file.\n"); */
+  /* } else { */
 
-    fprintf(out_file, "P6\n");
-    fprintf(out_file, "%d %d 255\n", xres, yres);
+  /*   fprintf(out_file, "P6\n"); */
+  /*   fprintf(out_file, "%d %d 255\n", xres, yres); */
 
-    fwrite(rgbData, sizeof(unsigned char), xres*yres*3, out_file);
+  /*   fwrite(rgbData, sizeof(unsigned char), xres*yres*3, out_file); */
 
-    fclose(out_file);
-  }
+  /*   fclose(out_file); */
+  /* } */
   
   
   fflush(stderr);
@@ -507,7 +769,11 @@ int main(int argc, char **argv)
   open_device();
   init_device();
   start_capturing();
+  
+  displayRGBInit(yres, xres); // xres and yres set by init_device()
   mainloop();
+  finalizeRGB();
+    
   stop_capturing();
   uninit_device();
   close_device();
