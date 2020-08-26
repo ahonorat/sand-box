@@ -64,24 +64,26 @@ int main(int argc, char **argv) {
 
 
   fprintf(stderr, "--> With pthread barrier:\n");
-  // init pthread attributes
-  pthread_attr_t attr;
-  pthread_attr_init(&attr);
-  // init cpuset struct
-  cpu_set_t cpuset;
-  CPU_ZERO(&cpuset);
-  unsigned int core_id = 0;
-  CPU_SET(core_id, &cpuset);
-  // set pthread affinity
-  pthread_attr_setaffinity_np(&attr, sizeof(cpuset), &cpuset);
-  //
-  sched_setaffinity(getpid(), sizeof(cpuset), &cpuset);
   pthread_barrier_init(&iter_barrier, NULL, 1);
-  // create thread
-  pthread_t thread;
-  pthread_create(&thread, &attr, &timeConsumingFunctionInThread, NULL);
-
-  pthread_join(thread, NULL);
+  // even if replacing the following call by the thread call (commented below)
+  // the barrier without any active thread creates overhead about 400 ms / 1e6 calls on my laptop
+  timeConsumingFunctionInThread(NULL);
+  /* // init pthread attributes */
+  /* pthread_attr_t attr; */
+  /* pthread_attr_init(&attr); */
+  /* // init cpuset struct */
+  /* cpu_set_t cpuset; */
+  /* CPU_ZERO(&cpuset); */
+  /* unsigned int core_id = 0; */
+  /* CPU_SET(core_id, &cpuset); */
+  /* // set pthread affinity */
+  /* pthread_attr_setaffinity_np(&attr, sizeof(cpuset), &cpuset); */
+  /* // */
+  /* sched_setaffinity(getpid(), sizeof(cpuset), &cpuset); */
+  /* // create thread */
+  /* pthread_t thread; */
+  /* pthread_create(&thread, &attr, &timeConsumingFunctionInThread, NULL); */
+  /* pthread_join(thread, NULL); */
   
   
   return EXIT_SUCCESS;
