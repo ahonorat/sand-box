@@ -64,6 +64,10 @@ static unsigned int     n_buffers;
 static int              force_format;
 static int              frame_count = 100;
 
+
+// V4L2_PIX_FMT_YUYV for Minoru Dual Lens 3D 640x480 USB 2.0 Webcam (red stereo)
+// V4L2_PIX_FMT_NV12M for OmniVision OV5693 (Jetson TX2 onboard CSI)
+#define DEV_PXL_FORMAT V4L2_PIX_FMT_YUYV
 static int xres = 640, yres = 480, stride = 1280; // 640 x 480
 
 
@@ -78,7 +82,7 @@ static int xres = 640, yres = 480, stride = 1280; // 640 x 480
 
 #define PATH_TTF_FULL "/usr/local/share/fonts/DejaVuSans.ttf"
 #define FPS_MEAN 10
-
+static int requestExit = 0;
 
 // extern int preesmStopThreads;
 
@@ -125,7 +129,7 @@ static RGBDisplay display ;
 int exitCallBack(void* userdata, SDL_Event* event){
   if (event->type == SDL_QUIT){
     printf("Exit request from GUI.\n");
-    // preesmStopThreads = 1;
+    requestExit = 1;
     return 0;
   }
 
@@ -244,28 +248,38 @@ void refreshDisplayRGB()
   /* Draw FPS text */
   char fps_text[20];
   SDL_Color colorWhite = { 255, 255, 255, 255 };
+  SDL_Color colorBlack = { 0, 0, 0, 0 };
 
   double time = stopTiming(display.stampId);
   sprintf(fps_text, "FPS: %.1lf", FPS_MEAN / (time / 1000000.));
   startTiming(display.stampId);
   display.stampId = (display.stampId + 1) % FPS_MEAN;
 
-  SDL_Surface* fpsText = TTF_RenderText_Blended(display.text_font, fps_text, colorWhite);
-  SDL_Texture* fpsTexture = SDL_CreateTextureFromSurface(display.renderer, fpsText);
+  SDL_Surface* fpsTextW = TTF_RenderText_Blended(display.text_font, fps_text, colorWhite);
+  SDL_Surface* fpsTextB = TTF_RenderText_Blended(display.text_font, fps_text, colorBlack);
+  SDL_Texture* fpsTextureW = SDL_CreateTextureFromSurface(display.renderer, fpsTextW);
+  SDL_Texture* fpsTextureB = SDL_CreateTextureFromSurface(display.renderer, fpsTextB);
 
   int fpsWidth, fpsHeight;
-  SDL_QueryTexture(fpsTexture, NULL, NULL, &fpsWidth, &fpsHeight);
-  SDL_Rect fpsTextRect;
+  SDL_QueryTexture(fpsTextureW, NULL, NULL, &fpsWidth, &fpsHeight);
+  SDL_Rect fpsTextRectW,fpsTextRectB;
 
-  fpsTextRect.x = 0;
-  fpsTextRect.y = 0;
-  fpsTextRect.w = fpsWidth;
-  fpsTextRect.h = fpsHeight;
-  SDL_RenderCopy(display.renderer, fpsTexture, NULL, &fpsTextRect);
+  fpsTextRectW.x = xres - fpsWidth;
+  fpsTextRectW.y = 0;
+  fpsTextRectW.w = fpsWidth;
+  fpsTextRectW.h = fpsHeight;
+  fpsTextRectB.x = 0;
+  fpsTextRectB.y = 0;
+  fpsTextRectB.w = fpsWidth;
+  fpsTextRectB.h = fpsHeight;
+  SDL_RenderCopy(display.renderer, fpsTextureW, NULL, &fpsTextRectW);
+  SDL_RenderCopy(display.renderer, fpsTextureB, NULL, &fpsTextRectB);
 
   /* Free resources */
-  SDL_FreeSurface(fpsText);
-  SDL_DestroyTexture(fpsTexture);
+  SDL_FreeSurface(fpsTextW);
+  SDL_DestroyTexture(fpsTextureW);
+  SDL_FreeSurface(fpsTextB);
+  SDL_DestroyTexture(fpsTextureB);
 
   SDL_RenderPresent(display.renderer);
 
@@ -316,6 +330,340 @@ void finalizeRGB()
 
 /*
  * END OF SDL DISPLAY
+ **/
+
+
+/*
+ * BEGIN OF PIXEL FORMAT MAP
+ **/
+
+// https://stackoverflow.com/questions/22563827/list-available-capture-formats
+// grep 'V4L2_PIX_FMT' /usr/include/linux/videodev2.h | grep define | tr '\t' ' ' | cut -d' ' -f2 | sed 's/$/,/g
+
+static int allPixFormatsID[] = {
+V4L2_PIX_FMT_RGB332,
+V4L2_PIX_FMT_RGB444,
+V4L2_PIX_FMT_ARGB444,
+V4L2_PIX_FMT_XRGB444,
+V4L2_PIX_FMT_RGB555,
+V4L2_PIX_FMT_ARGB555,
+V4L2_PIX_FMT_XRGB555,
+V4L2_PIX_FMT_RGB565,
+V4L2_PIX_FMT_RGB555X,
+V4L2_PIX_FMT_ARGB555X,
+V4L2_PIX_FMT_XRGB555X,
+V4L2_PIX_FMT_RGB565X,
+V4L2_PIX_FMT_BGR666,
+V4L2_PIX_FMT_BGR24,
+V4L2_PIX_FMT_RGB24,
+V4L2_PIX_FMT_BGR32,
+V4L2_PIX_FMT_ABGR32,
+V4L2_PIX_FMT_XBGR32,
+V4L2_PIX_FMT_RGB32,
+V4L2_PIX_FMT_ARGB32,
+V4L2_PIX_FMT_XRGB32,
+V4L2_PIX_FMT_GREY,
+V4L2_PIX_FMT_Y4,
+V4L2_PIX_FMT_Y6,
+V4L2_PIX_FMT_Y10,
+V4L2_PIX_FMT_Y12,
+V4L2_PIX_FMT_Y16,
+V4L2_PIX_FMT_Y16_BE,
+V4L2_PIX_FMT_Y10BPACK,
+V4L2_PIX_FMT_PAL8,
+V4L2_PIX_FMT_UV8,
+V4L2_PIX_FMT_YUYV,
+V4L2_PIX_FMT_YYUV,
+V4L2_PIX_FMT_YVYU,
+V4L2_PIX_FMT_UYVY,
+V4L2_PIX_FMT_VYUY,
+V4L2_PIX_FMT_Y41P,
+V4L2_PIX_FMT_YUV444,
+V4L2_PIX_FMT_YUV555,
+V4L2_PIX_FMT_YUV565,
+V4L2_PIX_FMT_YUV32,
+V4L2_PIX_FMT_HI240,
+V4L2_PIX_FMT_HM12,
+V4L2_PIX_FMT_M420,
+V4L2_PIX_FMT_NV12,
+V4L2_PIX_FMT_NV21,
+V4L2_PIX_FMT_NV16,
+V4L2_PIX_FMT_NV61,
+V4L2_PIX_FMT_NV24,
+V4L2_PIX_FMT_NV42,
+V4L2_PIX_FMT_NV12M,
+V4L2_PIX_FMT_NV21M,
+V4L2_PIX_FMT_NV16M,
+V4L2_PIX_FMT_NV61M,
+V4L2_PIX_FMT_NV12MT,
+V4L2_PIX_FMT_NV12MT_16X16,
+V4L2_PIX_FMT_YUV410,
+V4L2_PIX_FMT_YVU410,
+V4L2_PIX_FMT_YUV411P,
+V4L2_PIX_FMT_YUV420,
+V4L2_PIX_FMT_YVU420,
+V4L2_PIX_FMT_YUV422P,
+V4L2_PIX_FMT_YUV420M,
+V4L2_PIX_FMT_YVU420M,
+V4L2_PIX_FMT_YUV422M,
+V4L2_PIX_FMT_YVU422M,
+V4L2_PIX_FMT_YUV444M,
+V4L2_PIX_FMT_YVU444M,
+V4L2_PIX_FMT_SBGGR8,
+V4L2_PIX_FMT_SGBRG8,
+V4L2_PIX_FMT_SGRBG8,
+V4L2_PIX_FMT_SRGGB8,
+V4L2_PIX_FMT_SBGGR10,
+V4L2_PIX_FMT_SGBRG10,
+V4L2_PIX_FMT_SGRBG10,
+V4L2_PIX_FMT_SRGGB10,
+V4L2_PIX_FMT_SBGGR10P,
+V4L2_PIX_FMT_SGBRG10P,
+V4L2_PIX_FMT_SGRBG10P,
+V4L2_PIX_FMT_SRGGB10P,
+V4L2_PIX_FMT_SBGGR10ALAW8,
+V4L2_PIX_FMT_SGBRG10ALAW8,
+V4L2_PIX_FMT_SGRBG10ALAW8,
+V4L2_PIX_FMT_SRGGB10ALAW8,
+V4L2_PIX_FMT_SBGGR10DPCM8,
+V4L2_PIX_FMT_SGBRG10DPCM8,
+V4L2_PIX_FMT_SGRBG10DPCM8,
+V4L2_PIX_FMT_SRGGB10DPCM8,
+V4L2_PIX_FMT_SBGGR12,
+V4L2_PIX_FMT_SGBRG12,
+V4L2_PIX_FMT_SGRBG12,
+V4L2_PIX_FMT_SRGGB12,
+V4L2_PIX_FMT_SBGGR12P,
+V4L2_PIX_FMT_SGBRG12P,
+V4L2_PIX_FMT_SGRBG12P,
+V4L2_PIX_FMT_SRGGB12P,
+V4L2_PIX_FMT_SBGGR16,
+V4L2_PIX_FMT_SGBRG16,
+V4L2_PIX_FMT_SGRBG16,
+V4L2_PIX_FMT_SRGGB16,
+V4L2_PIX_FMT_HSV24,
+V4L2_PIX_FMT_HSV32,
+V4L2_PIX_FMT_MJPEG,
+V4L2_PIX_FMT_JPEG,
+V4L2_PIX_FMT_DV,
+V4L2_PIX_FMT_MPEG,
+V4L2_PIX_FMT_H264,
+V4L2_PIX_FMT_H264_NO_SC,
+V4L2_PIX_FMT_H264_MVC,
+V4L2_PIX_FMT_H263,
+V4L2_PIX_FMT_MPEG1,
+V4L2_PIX_FMT_MPEG2,
+V4L2_PIX_FMT_MPEG4,
+V4L2_PIX_FMT_XVID,
+V4L2_PIX_FMT_VC1_ANNEX_G,
+V4L2_PIX_FMT_VC1_ANNEX_L,
+V4L2_PIX_FMT_VP8,
+V4L2_PIX_FMT_VP9,
+V4L2_PIX_FMT_HEVC,
+V4L2_PIX_FMT_CPIA1,
+V4L2_PIX_FMT_WNVA,
+V4L2_PIX_FMT_SN9C10X,
+V4L2_PIX_FMT_SN9C20X_I420,
+V4L2_PIX_FMT_PWC1,
+V4L2_PIX_FMT_PWC2,
+V4L2_PIX_FMT_ET61X251,
+V4L2_PIX_FMT_SPCA501,
+V4L2_PIX_FMT_SPCA505,
+V4L2_PIX_FMT_SPCA508,
+V4L2_PIX_FMT_SPCA561,
+V4L2_PIX_FMT_PAC207,
+V4L2_PIX_FMT_MR97310A,
+V4L2_PIX_FMT_JL2005BCD,
+V4L2_PIX_FMT_SN9C2028,
+V4L2_PIX_FMT_SQ905C,
+V4L2_PIX_FMT_PJPG,
+V4L2_PIX_FMT_OV511,
+V4L2_PIX_FMT_OV518,
+V4L2_PIX_FMT_STV0680,
+V4L2_PIX_FMT_TM6000,
+V4L2_PIX_FMT_CIT_YYVYUY,
+V4L2_PIX_FMT_KONICA420,
+V4L2_PIX_FMT_JPGL,
+V4L2_PIX_FMT_SE401,
+V4L2_PIX_FMT_S5C_UYVY_JPG,
+V4L2_PIX_FMT_Y8I,
+V4L2_PIX_FMT_Y12I,
+V4L2_PIX_FMT_Z16,
+V4L2_PIX_FMT_MT21C,
+V4L2_PIX_FMT_INZI,
+V4L2_PIX_FMT_PRIV_MAGIC,
+V4L2_PIX_FMT_FLAG_PREMUL_ALPHA
+};
+
+static char* allPixFormatsName[] = {
+"V4L2_PIX_FMT_RGB332",
+"V4L2_PIX_FMT_RGB444",
+"V4L2_PIX_FMT_ARGB444",
+"V4L2_PIX_FMT_XRGB444",
+"V4L2_PIX_FMT_RGB555",
+"V4L2_PIX_FMT_ARGB555",
+"V4L2_PIX_FMT_XRGB555",
+"V4L2_PIX_FMT_RGB565",
+"V4L2_PIX_FMT_RGB555X",
+"V4L2_PIX_FMT_ARGB555X",
+"V4L2_PIX_FMT_XRGB555X",
+"V4L2_PIX_FMT_RGB565X",
+"V4L2_PIX_FMT_BGR666",
+"V4L2_PIX_FMT_BGR24",
+"V4L2_PIX_FMT_RGB24",
+"V4L2_PIX_FMT_BGR32",
+"V4L2_PIX_FMT_ABGR32",
+"V4L2_PIX_FMT_XBGR32",
+"V4L2_PIX_FMT_RGB32",
+"V4L2_PIX_FMT_ARGB32",
+"V4L2_PIX_FMT_XRGB32",
+"V4L2_PIX_FMT_GREY",
+"V4L2_PIX_FMT_Y4",
+"V4L2_PIX_FMT_Y6",
+"V4L2_PIX_FMT_Y10",
+"V4L2_PIX_FMT_Y12",
+"V4L2_PIX_FMT_Y16",
+"V4L2_PIX_FMT_Y16_BE",
+"V4L2_PIX_FMT_Y10BPACK",
+"V4L2_PIX_FMT_PAL8",
+"V4L2_PIX_FMT_UV8",
+"V4L2_PIX_FMT_YUYV",
+"V4L2_PIX_FMT_YYUV",
+"V4L2_PIX_FMT_YVYU",
+"V4L2_PIX_FMT_UYVY",
+"V4L2_PIX_FMT_VYUY",
+"V4L2_PIX_FMT_Y41P",
+"V4L2_PIX_FMT_YUV444",
+"V4L2_PIX_FMT_YUV555",
+"V4L2_PIX_FMT_YUV565",
+"V4L2_PIX_FMT_YUV32",
+"V4L2_PIX_FMT_HI240",
+"V4L2_PIX_FMT_HM12",
+"V4L2_PIX_FMT_M420",
+"V4L2_PIX_FMT_NV12",
+"V4L2_PIX_FMT_NV21",
+"V4L2_PIX_FMT_NV16",
+"V4L2_PIX_FMT_NV61",
+"V4L2_PIX_FMT_NV24",
+"V4L2_PIX_FMT_NV42",
+"V4L2_PIX_FMT_NV12M",
+"V4L2_PIX_FMT_NV21M",
+"V4L2_PIX_FMT_NV16M",
+"V4L2_PIX_FMT_NV61M",
+"V4L2_PIX_FMT_NV12MT",
+"V4L2_PIX_FMT_NV12MT_16X16",
+"V4L2_PIX_FMT_YUV410",
+"V4L2_PIX_FMT_YVU410",
+"V4L2_PIX_FMT_YUV411P",
+"V4L2_PIX_FMT_YUV420",
+"V4L2_PIX_FMT_YVU420",
+"V4L2_PIX_FMT_YUV422P",
+"V4L2_PIX_FMT_YUV420M",
+"V4L2_PIX_FMT_YVU420M",
+"V4L2_PIX_FMT_YUV422M",
+"V4L2_PIX_FMT_YVU422M",
+"V4L2_PIX_FMT_YUV444M",
+"V4L2_PIX_FMT_YVU444M",
+"V4L2_PIX_FMT_SBGGR8",
+"V4L2_PIX_FMT_SGBRG8",
+"V4L2_PIX_FMT_SGRBG8",
+"V4L2_PIX_FMT_SRGGB8",
+"V4L2_PIX_FMT_SBGGR10",
+"V4L2_PIX_FMT_SGBRG10",
+"V4L2_PIX_FMT_SGRBG10",
+"V4L2_PIX_FMT_SRGGB10",
+"V4L2_PIX_FMT_SBGGR10P",
+"V4L2_PIX_FMT_SGBRG10P",
+"V4L2_PIX_FMT_SGRBG10P",
+"V4L2_PIX_FMT_SRGGB10P",
+"V4L2_PIX_FMT_SBGGR10ALAW8",
+"V4L2_PIX_FMT_SGBRG10ALAW8",
+"V4L2_PIX_FMT_SGRBG10ALAW8",
+"V4L2_PIX_FMT_SRGGB10ALAW8",
+"V4L2_PIX_FMT_SBGGR10DPCM8",
+"V4L2_PIX_FMT_SGBRG10DPCM8",
+"V4L2_PIX_FMT_SGRBG10DPCM8",
+"V4L2_PIX_FMT_SRGGB10DPCM8",
+"V4L2_PIX_FMT_SBGGR12",
+"V4L2_PIX_FMT_SGBRG12",
+"V4L2_PIX_FMT_SGRBG12",
+"V4L2_PIX_FMT_SRGGB12",
+"V4L2_PIX_FMT_SBGGR12P",
+"V4L2_PIX_FMT_SGBRG12P",
+"V4L2_PIX_FMT_SGRBG12P",
+"V4L2_PIX_FMT_SRGGB12P",
+"V4L2_PIX_FMT_SBGGR16",
+"V4L2_PIX_FMT_SGBRG16",
+"V4L2_PIX_FMT_SGRBG16",
+"V4L2_PIX_FMT_SRGGB16",
+"V4L2_PIX_FMT_HSV24",
+"V4L2_PIX_FMT_HSV32",
+"V4L2_PIX_FMT_MJPEG",
+"V4L2_PIX_FMT_JPEG",
+"V4L2_PIX_FMT_DV",
+"V4L2_PIX_FMT_MPEG",
+"V4L2_PIX_FMT_H264",
+"V4L2_PIX_FMT_H264_NO_SC",
+"V4L2_PIX_FMT_H264_MVC",
+"V4L2_PIX_FMT_H263",
+"V4L2_PIX_FMT_MPEG1",
+"V4L2_PIX_FMT_MPEG2",
+"V4L2_PIX_FMT_MPEG4",
+"V4L2_PIX_FMT_XVID",
+"V4L2_PIX_FMT_VC1_ANNEX_G",
+"V4L2_PIX_FMT_VC1_ANNEX_L",
+"V4L2_PIX_FMT_VP8",
+"V4L2_PIX_FMT_VP9",
+"V4L2_PIX_FMT_HEVC",
+"V4L2_PIX_FMT_CPIA1",
+"V4L2_PIX_FMT_WNVA",
+"V4L2_PIX_FMT_SN9C10X",
+"V4L2_PIX_FMT_SN9C20X_I420",
+"V4L2_PIX_FMT_PWC1",
+"V4L2_PIX_FMT_PWC2",
+"V4L2_PIX_FMT_ET61X251",
+"V4L2_PIX_FMT_SPCA501",
+"V4L2_PIX_FMT_SPCA505",
+"V4L2_PIX_FMT_SPCA508",
+"V4L2_PIX_FMT_SPCA561",
+"V4L2_PIX_FMT_PAC207",
+"V4L2_PIX_FMT_MR97310A",
+"V4L2_PIX_FMT_JL2005BCD",
+"V4L2_PIX_FMT_SN9C2028",
+"V4L2_PIX_FMT_SQ905C",
+"V4L2_PIX_FMT_PJPG",
+"V4L2_PIX_FMT_OV511",
+"V4L2_PIX_FMT_OV518",
+"V4L2_PIX_FMT_STV0680",
+"V4L2_PIX_FMT_TM6000",
+"V4L2_PIX_FMT_CIT_YYVYUY",
+"V4L2_PIX_FMT_KONICA420",
+"V4L2_PIX_FMT_JPGL",
+"V4L2_PIX_FMT_SE401",
+"V4L2_PIX_FMT_S5C_UYVY_JPG",
+"V4L2_PIX_FMT_Y8I",
+"V4L2_PIX_FMT_Y12I",
+"V4L2_PIX_FMT_Z16",
+"V4L2_PIX_FMT_MT21C",
+"V4L2_PIX_FMT_INZI",
+"V4L2_PIX_FMT_PRIV_MAGIC",
+"V4L2_PIX_FMT_FLAG_PREMUL_ALPHA"
+};
+
+void printFormatName(int pixelFormatID) {
+    for (int i = 0; i<152; i++) {
+        if (pixelFormatID == allPixFormatsID[i]) {
+	  printf("Selected format is: %s\n", allPixFormatsName[i]);
+        }
+    }
+    if (pixelFormatID != V4L2_PIX_FMT_YUYV) {
+              printf("/!\\ This format is not supported, it will crash. Only YUYV is currently supported.\n");
+    }
+}
+
+
+/*
+ * END OF PIXEL FORMAT MAP
  **/
 
 
@@ -444,7 +792,7 @@ static void mainloop(void)
 
   count = frame_count;
 
-  while (count-- > 0) {
+  while (count-- > 0 && requestExit < 1) {
     for (;;) {
       fd_set fds;
       struct timeval tv;
@@ -635,8 +983,8 @@ static void init_device(void)
   if (force_format) {
     fmt.fmt.pix.width       = xres;
     fmt.fmt.pix.height      = yres;
-    fmt.fmt.pix.pixelformat = V4L2_PIX_FMT_YUYV;
-    fmt.fmt.pix.field       = V4L2_FIELD_NONE; // _INTERLACED
+    fmt.fmt.pix.pixelformat = DEV_PXL_FORMAT;
+    fmt.fmt.pix.field       = V4L2_FIELD_NONE; // _INTERLACED ? 
 
     if (-1 == xioctl(fd, VIDIOC_S_FMT, &fmt))
       errno_exit("VIDIOC_S_FMT");
@@ -652,8 +1000,11 @@ static void init_device(void)
   xres = fmt.fmt.pix.width;
   yres = fmt.fmt.pix.height;
   stride = fmt.fmt.pix.bytesperline;
-
   fprintf(stderr, "Resolution: %d x %d, Stride: %d\n", xres, yres, stride);
+
+  int format = fmt.fmt.pix.pixelformat;
+  printFormatName(format);
+  
   
   /* Buggy driver paranoia. */
   min = fmt.fmt.pix.width * 2;
