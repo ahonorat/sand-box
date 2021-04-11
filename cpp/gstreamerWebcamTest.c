@@ -167,7 +167,7 @@ static GstFlowReturn have_frame (GstElement * appsink, gpointer user_data) {
 
 
 int main(int argc, char *argv[]) {
-    GstElement *pipeline, *source, *sink, *capsFilter1, *capsFilter2, *nvvidconv, *videoconvert;
+    GstElement *pipeline, *source, *sink, *capsFilter1, *capsFilter2, *nvvidconv;// *videoconvert;
     GstCaps *capsSource, *capsSink;
     GstBus *bus;
     GstMessage *msg;
@@ -177,7 +177,9 @@ int main(int argc, char *argv[]) {
     pipeline = gst_pipeline_new ("pipeline");
     source = gst_element_factory_make ("nvarguscamerasrc", "source");
     nvvidconv = gst_element_factory_make ("nvvidconv", "nvidiavideoconv");
-    videoconvert = gst_element_factory_make ("videoconvert", "videoconverter");
+    // https://forums.developer.nvidia.com/t/tx2-onboard-camera-command-reference-for-opencv/75724
+    // videoconvert not needed since we read in NV12 directly
+    //videoconvert = gst_element_factory_make ("videoconvert", "videoconverter");
     //sink = gst_element_factory_make ("autovideosink", "sink");
     sink = gst_element_factory_make ("appsink", "app_sink");
 
@@ -211,7 +213,7 @@ int main(int argc, char *argv[]) {
     g_signal_connect (sink, "new-sample", G_CALLBACK (have_frame), NULL);
 
     //check for null objects
-    if (!pipeline || !source || !sink || !capsFilter1 || !capsFilter2 || !nvvidconv || !videoconvert) {
+    if (!pipeline || !source || !sink || !capsFilter1 || !capsFilter2 || !nvvidconv /*|| !videoconvert*/) {
         fprintf(stderr, "Not all elements created.\n");
         return -1;
     }
@@ -228,8 +230,8 @@ int main(int argc, char *argv[]) {
     
 
     //add all elements together
-    gst_bin_add_many (GST_BIN (pipeline), source, capsFilter1, nvvidconv, capsFilter2, videoconvert, sink, NULL);
-    if (gst_element_link_many (source, capsFilter1, nvvidconv, capsFilter2, videoconvert, sink, NULL) != TRUE) {
+    gst_bin_add_many (GST_BIN (pipeline), source, capsFilter1, nvvidconv, capsFilter2, /*videoconvert,*/ sink, NULL);
+    if (gst_element_link_many (source, capsFilter1, nvvidconv, capsFilter2, /*videoconvert,*/ sink, NULL) != TRUE) {
         fprintf(stderr, "Elements could not be linked.\n");
         gst_object_unref (pipeline);
         return -1;
