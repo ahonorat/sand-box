@@ -87,8 +87,8 @@ void output_PPM6(unsigned char * data_NV12) {
     unsigned char * dst = (unsigned char *) malloc(tot_size*3 * sizeof(unsigned char));
     convert_NV12_to_rgb24(data_NV12, dst);
    
-   	ssize_t bufsz = snprintf(NULL, 0, img_file_format, frame_count);
-    char buf[bufsz];
+    ssize_t bufsz = snprintf(NULL, 0, img_file_format, frame_count);
+    char buf[bufsz + 1];
     snprintf(buf, bufsz + 1, img_file_format, frame_count);
 
    FILE* out_file = fopen(buf, "wb");
