@@ -1,5 +1,7 @@
 #! /usr/bin/python3
 
+# Parameterizable Collatz conjecture
+# with debug step infos.
 
 def collatzGen(mul, div, plus, maxIter, a):
     count = 1

@@ -1,6 +1,9 @@
 #!/bin/bash
 
 # --------------------------------------------------------
+# Reduce quality of images in given folder.
+# New images are created in a separate folder.
+#
 # Usage: 
 # >> ./lowQualImageFolder
 #    $1 = folder containing input images
