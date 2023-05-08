@@ -22,6 +22,7 @@ fi
 ## parameters
 imageExtension="JPG"
 qualityPrct="40%"
+resizePrct="50%"
 newNameSuffix="_lowQual"
 
 cd "${1}"
@@ -38,7 +39,8 @@ fi
 
 ## not so safe (if image name has newline)
 for img in *.${imageExtension}; do
-    echo "Converting ${1}/${img} with quality reduction of ${qualityPrct} ..."
+    echo "Converting ${1}/${img} with ${qualityPrct} quality and ${resizePrct} resize ..."
     newImageName="$(basename ${img} .${imageExtension})${newNameSuffix}.${imageExtension}"
-    convert "${img}" -quality "${qualityPrct}" "${newFolder}/${newImageName}"
+    convert "${img}" -resize "${resizePrct}" -quality "${qualityPrct}" "${newFolder}/${newImageName}"
 done
+
